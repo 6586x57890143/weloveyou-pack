@@ -11,8 +11,15 @@ The platform that runs the server and the Discord bot lives in a separate reposi
 `weloveyou.mc`. This one ships content; that one ships code. They are split because the
 cadences differ — a pack release is weekly and touches no Go.
 
-**Status: phase 3 (client distribution).** `stable` is a representative skeleton, not the
-finished pack. Nothing published yet.
+**Status: phase 3 (client distribution) verified end to end.** `stable` is a representative
+skeleton, not the finished pack. Nothing published to R2 yet.
+
+Verified on 2026-08-18 against a real Prism install and a local `packwiz serve`:
+the zip imports, `OverrideCommands`/`PreLaunchCommand`/memory survive the import,
+`mmc-pack.json` components stay intact, packwiz-installer downloads 17 client mods with the
+exact shipped command, **skips Lithostitched as wrong-side**, deletes a mod removed from the
+pack, and a re-sync restores exactly the client-side file set — no missing files, no extras.
+The only unverified step is a full Minecraft launch, which needs a real account.
 
 ## Layout
 
@@ -30,6 +37,11 @@ scripts/              CI helpers that must also run by hand
 ## Commands
 
 ```bash
+# Local dev loop: serve the pack, build a zip pointing at it, import into Prism.
+cd pack/stable && packwiz serve --port 8080     # then http://localhost:8080/pack.toml
+# temporarily point channels.toml at localhost, build, and:
+#   prismlauncher --import dist/weloveyou-stable.zip
+
 scripts/pack-check.sh              # side invariant + reachability
 scripts/pack-check.sh --full       # also downloads and hashes everything (slow)
 python scripts/instance-build.py   # build every channel's instance zip into dist/
