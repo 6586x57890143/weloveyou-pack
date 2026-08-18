@@ -1,0 +1,56 @@
+name: ci
+
+# Every push and pull request. Two invariants live here:
+#   - every mod entry declares an explicit `side`
+#   - mmc-pack.json and pack.toml agree on Minecraft and Fabric versions
+# Neither may gain `continue-on-error`.
+on:
+  push:
+    branches: ["**"]
+    tags-ignore: ["*-v*"]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  pack:
+    name: pack invariants
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
+        with:
+          go-version: "1.26.6"
+          cache: false
+      # packwiz publishes no tags, so this is an exact pseudo-version pin rather
+      # than @latest. Bump it deliberately, never implicitly — this binary
+      # decides what every player downloads.
+      - name: install packwiz
+        run: go install github.com/packwiz/packwiz@v0.0.0-20260218225342-dfd8b68a4796
+      # Structure and reachability only. --full downloads hundreds of megabytes
+      # and belongs in the release path, not on every PR.
+      - run: scripts/pack-check.sh
+
+  instance:
+    name: instance zips
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+      # Verifies the pinned packwiz-installer.jar hash and the version agreement
+      # between mmc-pack.json and pack.toml before it will build anything.
+      - run: python scripts/instance-build.py
+      - uses: actions/upload-artifact@v7
+        with:
+          name: instance-zips
+          path: dist/*.zip
+          if-no-files-found: error
+          retention-days: 7
