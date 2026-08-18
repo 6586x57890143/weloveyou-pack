@@ -1,6 +1,10 @@
 name = "Athena"
 filename = "athena-fabric-1.21.1-4.0.6.jar"
-side = "client"
+# Modrinth calls this client-only, and for its own purposes it is. But Oritech
+# declares a hard dependency on it regardless of side, so a server that skips it
+# refuses to start. Metadata describing what a mod DOES is not the same as what
+# the dependency graph REQUIRES.
+side = "both"
 
 [download]
 url = "https://cdn.modrinth.com/data/b1ZV3DIJ/versions/JfyYsWKP/athena-fabric-1.21.1-4.0.6.jar"
