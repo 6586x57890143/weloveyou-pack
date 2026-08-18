@@ -81,40 +81,39 @@ jobs:
       # delete every previously published v{version} prefix, and those are what
       # makes a rollback possible — repointing the rolling prefix at a version
       # that no longer exists is not a rollback.
-      - name: publish to gh-pages
+      # gh-pages is the accumulator, not the thing that serves. Direct Upload
+      # replaces the entire deployment every time, so without a durable store of
+      # past releases each publish would wipe the pinned v{version} prefixes —
+      # and repointing the rolling prefix at a version that no longer exists is
+      # not a rollback. This branch keeps them, and doubles as an audit trail of
+      # exactly what was served when.
+      - name: assemble the site
+        id: site
         env:
           CHANNEL: ${{ steps.ch.outputs.channel }}
           VERSION: ${{ steps.ch.outputs.version }}
         run: |
           set -euo pipefail
-          site=$(mktemp -d)
+          site="$RUNNER_TEMP/site"
           git clone --quiet --depth 1 --branch gh-pages \
-            "https://x-access-token:${{ github.token }}@github.com/${GITHUB_REPOSITORY}.git" "$site" 2>/dev/null || {
-            echo "gh-pages does not exist yet; creating it"
-            git clone --quiet --depth 1 "https://x-access-token:${{ github.token }}@github.com/${GITHUB_REPOSITORY}.git" "$site"
-            git -C "$site" checkout --orphan gh-pages
-            git -C "$site" rm -rqf . 2>/dev/null || true
-          }
+            "https://x-access-token:${{ github.token }}@github.com/${GITHUB_REPOSITORY}.git" "$site"
 
           dest="$site/pack/${CHANNEL}"
-          # Immutable copy first. If the rolling prefix were written first and the
-          # run then failed, players would be pointed at a version with no
-          # permanent copy to roll back to.
+          # Immutable copy first. If the rolling prefix were written first and
+          # the run then failed, players would be pointed at a version with no
+          # permanent copy to fall back to.
           mkdir -p "$dest/v${VERSION}"
           cp -r "pack/${CHANNEL}/." "$dest/v${VERSION}/"
-          rm -rf "$dest/v${VERSION}/v"* 2>/dev/null || true
 
-          # Rolling prefix. Rebuilt from scratch so a mod removed from the pack
-          # disappears here too; a stale .pw.toml would still resolve for an
-          # updater holding an old index.
+          # Rolling prefix, rebuilt from scratch so a mod removed from the pack
+          # disappears here too. A stale .pw.toml would still resolve for an
+          # updater holding an old index. The v* directories are preserved.
           find "$dest" -maxdepth 1 -mindepth 1 ! -name 'v*' -exec rm -rf {} +
           cp -r "pack/${CHANNEL}/." "$dest/"
+          rm -rf "$dest/v${VERSION}/v"* 2>/dev/null || true
 
-          cp "dist/weloveyou-${CHANNEL}.zip" "$dest/weloveyou-${CHANNEL}.zip"
+          cp "dist/weloveyou-${CHANNEL}.zip"    "$dest/weloveyou-${CHANNEL}.zip"
           cp "dist/weloveyou-${CHANNEL}.mrpack" "$dest/weloveyou-${CHANNEL}.mrpack"
-
-          # Jekyll would otherwise skip files and directories beginning with an
-          # underscore, and silently 404 them.
           touch "$site/.nojekyll"
 
           cd "$site"
@@ -122,23 +121,54 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add -A
           if git diff --cached --quiet; then
-            echo "nothing changed"
+            echo "no change to record"
           else
             git commit -q -m "publish ${CHANNEL} v${VERSION}"
             git push -q origin gh-pages
-            echo "published"
           fi
+          echo "dir=$site" >> "$GITHUB_OUTPUT"
+          echo "published files: $(find "$site" -type f | wc -l)"
+
+      # Direct Upload rather than Cloudflare's Git integration: this way
+      # Cloudflare is never granted read access to the repository. The trade is
+      # one scoped API token living in GitHub secrets, which is the same shape
+      # as every other credential here.
+      #
+      # wrangler is pinned. It is a build-time dependency with a deploy token in
+      # its environment, so it does not float on @latest.
+      - name: deploy to cloudflare pages
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          PROJECT: ${{ vars.CF_PAGES_PROJECT }}
+        run: |
+          set -euo pipefail
+          test -n "${CLOUDFLARE_API_TOKEN:-}"  || { echo "::error::CLOUDFLARE_API_TOKEN is not set"; exit 1; }
+          test -n "${CLOUDFLARE_ACCOUNT_ID:-}" || { echo "::error::CLOUDFLARE_ACCOUNT_ID is not set"; exit 1; }
+          project="${PROJECT:-weloveyou-pack}"
+
+          # Idempotent: succeeds when the project already exists.
+          npx --yes wrangler@4 pages project create "$project" \
+            --production-branch=gh-pages 2>/dev/null || true
+
+          npx --yes wrangler@4 pages deploy "${{ steps.site.outputs.dir }}" \
+            --project-name="$project" \
+            --branch=gh-pages \
+            --commit-dirty=true
 
       - name: summary
         env:
           CHANNEL: ${{ steps.ch.outputs.channel }}
           VERSION: ${{ steps.ch.outputs.version }}
+          PROJECT: ${{ vars.CF_PAGES_PROJECT }}
         run: |
-          base="https://${GITHUB_REPOSITORY_OWNER}.github.io/${GITHUB_REPOSITORY#*/}"
+          base="https://${PROJECT:-weloveyou-pack}.pages.dev"
           {
             echo "### ${CHANNEL} v${VERSION} published"
             echo
             echo "- rolling: \`${base}/pack/${CHANNEL}/pack.toml\`"
             echo "- pinned:  \`${base}/pack/${CHANNEL}/v${VERSION}/pack.toml\`"
             echo "- instance zip: \`${base}/pack/${CHANNEL}/weloveyou-${CHANNEL}.zip\`"
+            echo
+            echo "wly will notice the version change and post the release to Discord."
           } >> "$GITHUB_STEP_SUMMARY"
