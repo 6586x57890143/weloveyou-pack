@@ -40,6 +40,37 @@ jobs:
       # and belongs in the release path, not on every PR.
       - run: scripts/pack-check.sh
 
+  # What mods DECLARE. Catches a wrong `side` on either side of the wire, which
+  # pack-check.sh structurally cannot: it proves a side is declared, never that
+  # it is correct. Two of the three side bugs that reached players broke the
+  # client, which cannot be booted headlessly, so this is the only check that
+  # sees them.
+  deps:
+    name: dependency resolution
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+      - run: python scripts/deps-check.py
+
+  # What mods DO. Spark's async-profiler segfaulted the JVM with a perfectly
+  # valid dependency graph; only starting a server finds that.
+  smoke:
+    name: server smoke boot
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
+        with:
+          go-version: "1.26.6"
+          cache: false
+      - name: install packwiz
+        run: go install github.com/packwiz/packwiz@v0.0.0-20260218225342-dfd8b68a4796
+      - run: scripts/smoke-boot.sh stable
+
   instance:
     name: instance zips
     runs-on: ubuntu-latest

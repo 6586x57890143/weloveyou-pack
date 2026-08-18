@@ -69,6 +69,14 @@ jobs:
       - name: validate
         run: scripts/pack-check.sh --full
 
+      # Both gates again before publishing: a release must not be able to ship
+      # something CI would have rejected on a branch.
+      - name: dependency resolution
+        run: python scripts/deps-check.py "${{ steps.ch.outputs.channel }}"
+
+      - name: server smoke boot
+        run: scripts/smoke-boot.sh "${{ steps.ch.outputs.channel }}"
+
       - name: build instance zip
         run: python scripts/instance-build.py "${{ steps.ch.outputs.channel }}"
 
