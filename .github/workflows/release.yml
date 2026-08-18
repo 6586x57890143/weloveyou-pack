@@ -1,12 +1,16 @@
 name: release
 
 # Publishing a channel. `git tag stable-v1.4.2 && git push origin stable-v1.4.2`
-# validates it, builds every artifact, and syncs them to R2.
+# validates it, builds every artifact, and publishes them to GitHub Pages.
 #
-# The Discord announcement is deliberately NOT here. wly (in the platform repo)
-# polls the published pack.toml for a version change and posts the release
-# itself, which keeps the bot token out of GitHub entirely and means a pack
-# published by hand still announces. One code path, not two.
+# Pages rather than R2 for now: no card, no credentials, and packwiz's own docs
+# recommend it. The map will be served from the VPS directly, so object storage
+# has no remaining job here. Revisit if either outgrows that.
+#
+# The Discord announcement is deliberately NOT here. wly polls the published
+# pack.toml for a version change and posts the release itself, which keeps the
+# bot token out of GitHub entirely and means a pack published by hand still
+# announces. One code path, not two.
 on:
   push:
     tags: ["*-v*"]
@@ -22,14 +26,15 @@ permissions:
   contents: read
 
 concurrency:
-  group: release-${{ github.ref }}
+  group: release
   cancel-in-progress: false
 
 jobs:
   publish:
-    name: validate and sync
+    name: validate and publish
     runs-on: ubuntu-latest
-    environment: production
+    permissions:
+      contents: write   # pushes the built site to the gh-pages branch
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-go@v7
@@ -39,6 +44,7 @@ jobs:
       - uses: actions/setup-python@v6
         with:
           python-version: "3.13"
+
       - name: install packwiz
         run: go install github.com/packwiz/packwiz@v0.0.0-20260218225342-dfd8b68a4796
 
@@ -50,8 +56,7 @@ jobs:
           if [ -n "${{ github.event.inputs.channel }}" ]; then
             channel="${{ github.event.inputs.channel }}"
           else
-            # stable-v1.4.2 -> stable
-            channel="${GITHUB_REF_NAME%%-v*}"
+            channel="${GITHUB_REF_NAME%%-v*}"     # stable-v1.4.2 -> stable
           fi
           [ -d "pack/$channel" ] || { echo "::error::no such channel: pack/$channel"; exit 1; }
           version=$(grep -m1 -oE '^version *= *"[^"]+"' "pack/$channel/pack.toml" | grep -oE '"[^"]+"' | tr -d '"')
@@ -69,49 +74,71 @@ jobs:
 
       - name: build mrpack
         working-directory: pack/${{ steps.ch.outputs.channel }}
-        run: |
-          set -euo pipefail
-          packwiz modrinth export -o "../../dist/weloveyou-${{ steps.ch.outputs.channel }}.mrpack"
+        run: packwiz modrinth export -o "../../dist/weloveyou-${{ steps.ch.outputs.channel }}.mrpack"
 
-      - name: sync to R2
+      # Publishing by committing to gh-pages rather than with the Pages artifact
+      # actions, because an artifact deploy REPLACES the whole site. That would
+      # delete every previously published v{version} prefix, and those are what
+      # makes a rollback possible — repointing the rolling prefix at a version
+      # that no longer exists is not a rollback.
+      - name: publish to gh-pages
         env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
-          AWS_DEFAULT_REGION: auto
-          ENDPOINT: ${{ vars.R2_ENDPOINT }}
-          BUCKET: ${{ vars.R2_BUCKET }}
           CHANNEL: ${{ steps.ch.outputs.channel }}
           VERSION: ${{ steps.ch.outputs.version }}
         run: |
           set -euo pipefail
-          s3() { aws s3 "$@" --endpoint-url "$ENDPOINT" --no-progress; }
+          site=$(mktemp -d)
+          git clone --quiet --depth 1 --branch gh-pages \
+            "https://x-access-token:${{ github.token }}@github.com/${GITHUB_REPOSITORY}.git" "$site" 2>/dev/null || {
+            echo "gh-pages does not exist yet; creating it"
+            git clone --quiet --depth 1 "https://x-access-token:${{ github.token }}@github.com/${GITHUB_REPOSITORY}.git" "$site"
+            git -C "$site" checkout --orphan gh-pages
+            git -C "$site" rm -rqf . 2>/dev/null || true
+          }
 
-          # Immutable first. If the rolling prefix were written first and the
-          # run then failed, players would be pointed at a version that has no
+          dest="$site/pack/${CHANNEL}"
+          # Immutable copy first. If the rolling prefix were written first and the
+          # run then failed, players would be pointed at a version with no
           # permanent copy to roll back to.
-          s3 sync "pack/${CHANNEL}/" "s3://${BUCKET}/pack/${CHANNEL}/v${VERSION}/" \
-            --cache-control "public, max-age=31536000, immutable"
+          mkdir -p "$dest/v${VERSION}"
+          cp -r "pack/${CHANNEL}/." "$dest/v${VERSION}/"
+          rm -rf "$dest/v${VERSION}/v"* 2>/dev/null || true
 
-          # --delete so a mod removed from the pack disappears from the CDN too;
-          # a stale .pw.toml would still resolve for an updater holding an old index.
-          s3 sync "pack/${CHANNEL}/" "s3://${BUCKET}/pack/${CHANNEL}/" \
-            --delete --cache-control "public, max-age=60"
+          # Rolling prefix. Rebuilt from scratch so a mod removed from the pack
+          # disappears here too; a stale .pw.toml would still resolve for an
+          # updater holding an old index.
+          find "$dest" -maxdepth 1 -mindepth 1 ! -name 'v*' -exec rm -rf {} +
+          cp -r "pack/${CHANNEL}/." "$dest/"
 
-          s3 cp "dist/weloveyou-${CHANNEL}.zip" \
-            "s3://${BUCKET}/pack/${CHANNEL}/weloveyou-${CHANNEL}.zip" \
-            --cache-control "public, max-age=60"
-          s3 cp "dist/weloveyou-${CHANNEL}.mrpack" \
-            "s3://${BUCKET}/pack/${CHANNEL}/weloveyou-${CHANNEL}.mrpack" \
-            --cache-control "public, max-age=60"
+          cp "dist/weloveyou-${CHANNEL}.zip" "$dest/weloveyou-${CHANNEL}.zip"
+          cp "dist/weloveyou-${CHANNEL}.mrpack" "$dest/weloveyou-${CHANNEL}.mrpack"
+
+          # Jekyll would otherwise skip files and directories beginning with an
+          # underscore, and silently 404 them.
+          touch "$site/.nojekyll"
+
+          cd "$site"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "nothing changed"
+          else
+            git commit -q -m "publish ${CHANNEL} v${VERSION}"
+            git push -q origin gh-pages
+            echo "published"
+          fi
 
       - name: summary
+        env:
+          CHANNEL: ${{ steps.ch.outputs.channel }}
+          VERSION: ${{ steps.ch.outputs.version }}
         run: |
+          base="https://${GITHUB_REPOSITORY_OWNER}.github.io/${GITHUB_REPOSITORY#*/}"
           {
-            echo "### ${{ steps.ch.outputs.channel }} v${{ steps.ch.outputs.version }} published"
+            echo "### ${CHANNEL} v${VERSION} published"
             echo
-            echo "- rolling: \`pack/${{ steps.ch.outputs.channel }}/\`"
-            echo "- pinned:  \`pack/${{ steps.ch.outputs.channel }}/v${{ steps.ch.outputs.version }}/\`"
-            echo "- instance zip and .mrpack refreshed"
-            echo
-            echo "wly will notice the version change and post the release to Discord."
+            echo "- rolling: \`${base}/pack/${CHANNEL}/pack.toml\`"
+            echo "- pinned:  \`${base}/pack/${CHANNEL}/v${VERSION}/pack.toml\`"
+            echo "- instance zip: \`${base}/pack/${CHANNEL}/weloveyou-${CHANNEL}.zip\`"
           } >> "$GITHUB_STEP_SUMMARY"

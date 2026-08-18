@@ -2,13 +2,17 @@
 # into instance.cfg, so this is the single place a channel's URL is written on
 # the pack side.
 #
+# GitHub Pages, served from the gh-pages branch of this repository. No card, no
+# credentials, and packwiz's own docs recommend it. Swapping to a custom domain
+# later is a change to this line plus a re-tag.
+#
 # The platform repo (weloveyou.mc) carries the same URL in wly.toml, because the
-# daemon polls it to detect releases. One hostname, duplicated once, deliberately
-# — the alternative is a shared config repo, which is more machinery than a
-# hostname is worth.
+# daemon polls it to detect releases. One URL, duplicated once, deliberately —
+# the alternative is a shared config repo, which is more machinery than a URL is
+# worth.
 
 [stable]
-pack_url = "https://pack.example.com/stable/pack.toml"
+pack_url = "https://6586x57890143.github.io/weloveyou-pack/pack/stable/pack.toml"
 
 # [edge]
-# pack_url = "https://pack.example.com/edge/pack.toml"
+# pack_url = "https://6586x57890143.github.io/weloveyou-pack/pack/edge/pack.toml"
