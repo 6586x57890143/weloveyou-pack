@@ -6,7 +6,10 @@ name: ci
 # Neither may gain `continue-on-error`.
 on:
   push:
-    branches: ["**"]
+    # gh-pages is generated output, not source: it has no pack/ to validate and
+    # CI fails on it every publish. Exclude it rather than teach the checks to
+    # tolerate a branch they were never meant to see.
+    branches: ["**", "!gh-pages"]
     tags-ignore: ["*-v*"]
   pull_request:
   workflow_dispatch:
