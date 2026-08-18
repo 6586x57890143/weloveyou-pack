@@ -1,0 +1,14 @@
+# Where each channel is published. The instance builder substitutes pack_url
+# into instance.cfg, so this is the single place a channel's URL is written on
+# the pack side.
+#
+# The platform repo (weloveyou.mc) carries the same URL in wly.toml, because the
+# daemon polls it to detect releases. One hostname, duplicated once, deliberately
+# — the alternative is a shared config repo, which is more machinery than a
+# hostname is worth.
+
+[stable]
+pack_url = "https://pack.example.com/stable/pack.toml"
+
+# [edge]
+# pack_url = "https://pack.example.com/edge/pack.toml"

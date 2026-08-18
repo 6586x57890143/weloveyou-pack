@@ -1,0 +1,117 @@
+name: release
+
+# Publishing a channel. `git tag stable-v1.4.2 && git push origin stable-v1.4.2`
+# validates it, builds every artifact, and syncs them to R2.
+#
+# The Discord announcement is deliberately NOT here. wly (in the platform repo)
+# polls the published pack.toml for a version change and posts the release
+# itself, which keeps the bot token out of GitHub entirely and means a pack
+# published by hand still announces. One code path, not two.
+on:
+  push:
+    tags: ["*-v*"]
+  workflow_dispatch:
+    inputs:
+      channel:
+        description: "Channel to publish"
+        required: true
+        type: choice
+        options: [stable, edge]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    name: validate and sync
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
+        with:
+          go-version: "1.26.6"
+          cache: false
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+      - name: install packwiz
+        run: go install github.com/packwiz/packwiz@v0.0.0-20260218225342-dfd8b68a4796
+
+      - name: resolve channel
+        id: ch
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -n "${{ github.event.inputs.channel }}" ]; then
+            channel="${{ github.event.inputs.channel }}"
+          else
+            # stable-v1.4.2 -> stable
+            channel="${GITHUB_REF_NAME%%-v*}"
+          fi
+          [ -d "pack/$channel" ] || { echo "::error::no such channel: pack/$channel"; exit 1; }
+          version=$(grep -m1 -oE '^version *= *"[^"]+"' "pack/$channel/pack.toml" | grep -oE '"[^"]+"' | tr -d '"')
+          echo "channel=$channel" >> "$GITHUB_OUTPUT"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "publishing $channel v$version"
+
+      # Full verification: every file downloaded and hashed before anything
+      # reaches a player.
+      - name: validate
+        run: scripts/pack-check.sh --full
+
+      - name: build instance zip
+        run: python scripts/instance-build.py "${{ steps.ch.outputs.channel }}"
+
+      - name: build mrpack
+        working-directory: pack/${{ steps.ch.outputs.channel }}
+        run: |
+          set -euo pipefail
+          packwiz modrinth export -o "../../dist/weloveyou-${{ steps.ch.outputs.channel }}.mrpack"
+
+      - name: sync to R2
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: auto
+          ENDPOINT: ${{ vars.R2_ENDPOINT }}
+          BUCKET: ${{ vars.R2_BUCKET }}
+          CHANNEL: ${{ steps.ch.outputs.channel }}
+          VERSION: ${{ steps.ch.outputs.version }}
+        run: |
+          set -euo pipefail
+          s3() { aws s3 "$@" --endpoint-url "$ENDPOINT" --no-progress; }
+
+          # Immutable first. If the rolling prefix were written first and the
+          # run then failed, players would be pointed at a version that has no
+          # permanent copy to roll back to.
+          s3 sync "pack/${CHANNEL}/" "s3://${BUCKET}/pack/${CHANNEL}/v${VERSION}/" \
+            --cache-control "public, max-age=31536000, immutable"
+
+          # --delete so a mod removed from the pack disappears from the CDN too;
+          # a stale .pw.toml would still resolve for an updater holding an old index.
+          s3 sync "pack/${CHANNEL}/" "s3://${BUCKET}/pack/${CHANNEL}/" \
+            --delete --cache-control "public, max-age=60"
+
+          s3 cp "dist/weloveyou-${CHANNEL}.zip" \
+            "s3://${BUCKET}/pack/${CHANNEL}/weloveyou-${CHANNEL}.zip" \
+            --cache-control "public, max-age=60"
+          s3 cp "dist/weloveyou-${CHANNEL}.mrpack" \
+            "s3://${BUCKET}/pack/${CHANNEL}/weloveyou-${CHANNEL}.mrpack" \
+            --cache-control "public, max-age=60"
+
+      - name: summary
+        run: |
+          {
+            echo "### ${{ steps.ch.outputs.channel }} v${{ steps.ch.outputs.version }} published"
+            echo
+            echo "- rolling: \`pack/${{ steps.ch.outputs.channel }}/\`"
+            echo "- pinned:  \`pack/${{ steps.ch.outputs.channel }}/v${{ steps.ch.outputs.version }}/\`"
+            echo "- instance zip and .mrpack refreshed"
+            echo
+            echo "wly will notice the version change and post the release to Discord."
+          } >> "$GITHUB_STEP_SUMMARY"
