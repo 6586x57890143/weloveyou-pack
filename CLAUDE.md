@@ -37,7 +37,8 @@ scripts/              CI helpers that must also run by hand
 
 ## Commands
 
-The pack development loop — change mods, then join a real server running them:
+The pack development loop — change mods, then join a real server running them. On Windows
+run these from **Git Bash**, not WSL or PowerShell (see Conventions):
 
 ```bash
 scripts/pack-dev.sh add sodium --side client   # --side is REQUIRED, see below
@@ -126,6 +127,16 @@ version error. `scripts/instance-build.py` refuses to build on a mismatch.
   100644 and CI fails with `Permission denied` (exit 126). Fix with
   `git update-index --chmod=+x scripts/<name>`, and check `git ls-files -s scripts/` before
   pushing a new one.
+- **On Windows, run the scripts from Git Bash — not WSL, not PowerShell.** `bash` on the
+  PATH in PowerShell is the WSL launcher at `C:\WINDOWS\system32\bash.exe`, which fails
+  outright without a real distro installed (`execvpe(/bin/bash) failed`); the
+  `docker-desktop` entry in `wsl -l` is Docker's own utility VM, not one you can use. Git
+  Bash is also where `packwiz` is on the PATH. To launch it from PowerShell, call it by
+  full path:
+  `& "C:\Program Files\Git\bin\bash.exe" -lc "cd /c/files/sdb/weloveyou-pack && scripts/pack-dev.sh play"`
+  A real WSL distro would still need packwiz installed *inside* it: `packwiz serve` would
+  bind WSL's network while the container resolves `host.docker.internal` to the Windows
+  host, and the two would never meet.
 - **Write files with bash heredocs.** Python read_text/write_text use the Windows locale
   codec by default and will silently mangle every em-dash into a byte no UTF-8 parser
   accepts. If Python is unavoidable, pass `encoding="utf-8", newline="\n"`.
