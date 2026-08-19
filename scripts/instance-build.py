@@ -3,7 +3,7 @@
 
     scripts/instance-build.py stable [--out dist]
 
-Produces dist/weloveyou-<channel>.zip, ready to publish to R2. A player adds an
+Produces dist/weloveyou-<channel>.zip, ready to publish to Cloudflare Pages. A player adds an
 instance from that URL and every launch afterwards syncs the pack.
 
 Three things are checked before anything is zipped, because each has failed
