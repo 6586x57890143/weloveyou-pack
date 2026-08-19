@@ -31,12 +31,17 @@ for packfile in "${packs[@]}"; do
 
   # 1. A stale index ships a pack that cannot resolve. `refresh` is idempotent,
   #    so any diff it produces means someone edited metadata without refreshing.
+  # Hash the index BEFORE and AFTER refresh rather than asserting the git tree
+  # is clean. `refresh` is idempotent, so if it rewrites the index, the index
+  # was stale — which is the actual question. Asserting cleanliness answers a
+  # different one and fires on any uncommitted work, making the check unusable
+  # during pack development, where it is most useful. This still catches an
+  # untracked metafile: refresh adds it to index.toml, so the hash moves.
+  before=$(cat "$dir/index.toml" "$dir/pack.toml" | sha256sum)
   (cd "$dir" && packwiz refresh >/dev/null 2>&1) || err "$channel: packwiz refresh failed"
-  # --porcelain, not `git diff`: an untracked metafile is just as much a stale
-  # index as a modified one, and `git diff` does not see untracked files.
-  if [ -n "$(git status --porcelain -- "$dir")" ]; then
-    git status --short -- "$dir"
-    err "$channel: index is stale — run 'packwiz refresh' in $dir and commit the result"
+  after=$(cat "$dir/index.toml" "$dir/pack.toml" | sha256sum)
+  if [ "$before" != "$after" ]; then
+    err "$channel: index was stale — 'packwiz refresh' in $dir changed it; commit the result"
   fi
 
   # 2. Every entry declares an explicit, valid side.
