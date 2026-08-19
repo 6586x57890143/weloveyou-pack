@@ -5,14 +5,15 @@ Guidance for Claude Code (claude.ai/code) working in this repository.
 ## What this is
 
 `weloveyou-pack` — the modpack itself, plus the Prism Launcher instance templates that
-deliver it. Fabric, packwiz-managed, published to Cloudflare R2.
+deliver it. Fabric, packwiz-managed, published to Cloudflare Pages.
 
 The platform that runs the server and the Discord bot lives in a separate repository,
 `weloveyou.mc`. This one ships content; that one ships code. They are split because the
 cadences differ — a pack release is weekly and touches no Go.
 
 **Status: phase 3 (client distribution) verified end to end.** `stable` is a representative
-skeleton, not the finished pack. Nothing published to R2 yet.
+skeleton, not the finished pack. Five releases are live (`v0.1.0`–`v0.1.4`) on Cloudflare
+Pages; the immutable `v*` prefixes are retained on the `gh-pages` accumulator branch.
 
 Verified on 2026-08-18 against a real Prism install and a local `packwiz serve`:
 the zip imports, `OverrideCommands`/`PreLaunchCommand`/memory survive the import,
@@ -36,21 +37,41 @@ scripts/              CI helpers that must also run by hand
 
 ## Commands
 
-```bash
-# Local dev loop: serve the pack, build a zip pointing at it, import into Prism.
-cd pack/stable && packwiz serve --port 8080     # then http://localhost:8080/pack.toml
-# temporarily point channels.toml at localhost, build, and:
-#   prismlauncher --import dist/weloveyou-stable.zip
+The pack development loop — change mods, then join a real server running them. On Windows
+run these from **Git Bash**, not WSL or PowerShell (see Conventions):
 
+```bash
+scripts/pack-dev.sh add sodium --side client   # --side is REQUIRED, see below
+scripts/pack-dev.sh check                      # structure + per-side dependencies
+scripts/pack-dev.sh play                       # boots a server; join localhost:25565
+scripts/pack-dev.sh rm sodium
+scripts/pack-dev.sh list
+```
+
+`play` serves the **working tree** over `packwiz serve` and boots the same
+`itzg/minecraft-server:java25` image CI and production use, so what you join is what would
+ship. The world lives in a `wly-dev-<channel>-data` docker volume and survives restarts;
+Ctrl-C stops the server with SIGTERM so it saves. Nothing is published until you tag.
+
+Add `--channel edge` to any of them. `PLAY_PORT`, `PLAY_VIEW_DISTANCE` and `MC_MEMORY`
+override the defaults.
+
+The underlying tools, if you need them directly:
+
+```bash
 scripts/pack-check.sh              # side invariant + reachability
 scripts/pack-check.sh --full       # also downloads and hashes everything (slow)
+python scripts/deps-check.py stable   # per-side dependency + java constraint resolution
+scripts/smoke-boot.sh stable          # the CI gate: boot, require "Done (", tear down
 python scripts/instance-build.py   # build every channel's instance zip into dist/
 python scripts/instance-build.py stable
 
 cd pack/stable && packwiz refresh              # after ANY pack edit
-cd pack/stable && packwiz modrinth add <slug>  # add a mod
 cd pack/stable && packwiz modrinth export -o ../../dist/weloveyou-stable.mrpack
 ```
+
+To test the **client** path instead, point `channels.toml` at your `packwiz serve`, build the
+zip, and `prismlauncher --import dist/weloveyou-stable.zip`.
 
 `packwiz` must be on PATH. CI pins it to an exact pseudo-version because the project
 publishes no tags.
@@ -58,9 +79,13 @@ publishes no tags.
 ## Releasing
 
 `git tag stable-v1.4.2 && git push origin stable-v1.4.2`. That validates the channel with
-full hash verification, builds the instance zip and `.mrpack`, and syncs three things to R2:
-the immutable `pack/stable/v1.4.2/` prefix, the rolling `pack/stable/` prefix, and the
-launcher artifacts.
+full hash verification, builds the instance zip and `.mrpack`, and publishes three things to
+Cloudflare Pages: the immutable `pack/stable/v1.4.2/` prefix, the rolling `pack/stable/`
+prefix, and the launcher artifacts.
+
+Pages Direct Upload replaces the whole deployment every time, so the `gh-pages` branch is the
+accumulator that durably retains past `v*` prefixes — that branch is what makes rollback
+possible, not the deployment.
 
 Immutable is written first on purpose. If the rolling prefix were updated first and the run
 then failed, players would be pointed at a version with no permanent copy to roll back to.
@@ -102,6 +127,16 @@ version error. `scripts/instance-build.py` refuses to build on a mismatch.
   100644 and CI fails with `Permission denied` (exit 126). Fix with
   `git update-index --chmod=+x scripts/<name>`, and check `git ls-files -s scripts/` before
   pushing a new one.
+- **On Windows, run the scripts from Git Bash — not WSL, not PowerShell.** `bash` on the
+  PATH in PowerShell is the WSL launcher at `C:\WINDOWS\system32\bash.exe`, which fails
+  outright without a real distro installed (`execvpe(/bin/bash) failed`); the
+  `docker-desktop` entry in `wsl -l` is Docker's own utility VM, not one you can use. Git
+  Bash is also where `packwiz` is on the PATH. To launch it from PowerShell, call it by
+  full path:
+  `& "C:\Program Files\Git\bin\bash.exe" -lc "cd /c/files/sdb/weloveyou-pack && scripts/pack-dev.sh play"`
+  A real WSL distro would still need packwiz installed *inside* it: `packwiz serve` would
+  bind WSL's network while the container resolves `host.docker.internal` to the Windows
+  host, and the two would never meet.
 - **Write files with bash heredocs.** Python read_text/write_text use the Windows locale
   codec by default and will silently mangle every em-dash into a byte no UTF-8 parser
   accepts. If Python is unavoidable, pass `encoding="utf-8", newline="\n"`.
