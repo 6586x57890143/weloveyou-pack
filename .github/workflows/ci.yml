@@ -32,7 +32,7 @@ jobs:
           go-version: "1.26.6"
           cache: false
       # packwiz publishes no tags, so this is an exact pseudo-version pin rather
-      # than @latest. Bump it deliberately, never implicitly — this binary
+      # than @latest. Bump it deliberately, never implicitly, this binary
       # decides what every player downloads.
       - name: install packwiz
         run: go install github.com/packwiz/packwiz@v0.0.0-20260218225342-dfd8b68a4796

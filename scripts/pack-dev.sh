@@ -7,7 +7,7 @@
 #   scripts/pack-dev.sh play                                 [--channel stable]
 #   scripts/pack-dev.sh list                                 [--channel stable]
 #
-# Nothing here resolves mods or downloads jars — packwiz does that, and the
+# Nothing here resolves mods or downloads jars, packwiz does that, and the
 # three validation scripts do the checking. This exists for one reason: to make
 # `side` a required decision at the moment a mod is added.
 #
@@ -16,7 +16,7 @@
 # shipped so far: Oritech hard-depends on athena (Modrinth: client) and the
 # server died; Terralith depends on lithostitched, shipped server-only, and the
 # client died. So --side is mandatory and is written after packwiz has had its
-# say. If you are unsure, `both` is the safe wrong answer — it costs TPS, not a
+# say. If you are unsure, `both` is the safe wrong answer: it costs TPS, not a
 # crash.
 #
 # Publishing is unchanged and is not here: commit, then tag stable-v* and let
@@ -96,7 +96,7 @@ case "$cmd" in
     after=$(find "$packdir" -name '*.pw.toml' | sort)
 
     mapfile -t new < <(comm -13 <(echo "$before") <(echo "$after"))
-    [ ${#new[@]} -eq 0 ] && { echo "::error::packwiz added no new metafile — is $slug already in the pack?"; exit 1; }
+    [ ${#new[@]} -eq 0 ] && { echo "::error::packwiz added no new metafile, is $slug already in the pack?"; exit 1; }
 
     # packwiz pulls dependencies in alongside the mod you asked for, and they
     # get the same side deliberately: a dependency has to ship wherever its
@@ -130,8 +130,8 @@ case "$cmd" in
 
   play)
     # ponytail: on MSYS/Git Bash `exec` spawns a new pid instead of replacing
-    # this one, so killing THIS pid orphans the server. Ctrl-C is unaffected —
-    # it signals the whole process group — and that is the documented way to
+    # this one, so killing THIS pid orphans the server. Ctrl-C is unaffected,
+    # it signals the whole process group, and that is the documented way to
     # stop it. Drop the exec and forward signals by hand if that stops being true.
     exec scripts/smoke-boot.sh --play "$channel"
     ;;

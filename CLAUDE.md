@@ -2,30 +2,30 @@
 
 Guidance for Claude Code (claude.ai/code) working in this repository.
 
-## What this is
+## What this is 💖
 
-`weloveyou-pack` — the modpack itself, plus the Prism Launcher instance templates that
+`weloveyou-pack` is the modpack itself, plus the Prism Launcher instance templates that
 deliver it. Fabric, packwiz-managed, published to Cloudflare Pages.
 
 The platform that runs the server and the Discord bot lives in a separate repository,
 `weloveyou.mc`. This one ships content; that one ships code. They are split because the
-cadences differ — a pack release is weekly and touches no Go.
+cadences differ. A pack release goes out most weeks and never touches Go.
 
 **Status: phase 3 (client distribution) verified end to end.** `stable` is a representative
-skeleton, not the finished pack. Five releases are live (`v0.1.0`–`v0.1.4`) on Cloudflare
+skeleton, not the finished pack. Five releases are live (`v0.1.0` through `v0.1.4`) on Cloudflare
 Pages; the immutable `v*` prefixes are retained on the `gh-pages` accumulator branch.
 
 Verified on 2026-08-18 against a real Prism install and a local `packwiz serve`:
 the zip imports, `OverrideCommands`/`PreLaunchCommand`/memory survive the import,
 `mmc-pack.json` components stay intact, packwiz-installer downloads 17 client mods with the
 exact shipped command, **skips Lithostitched as wrong-side**, deletes a mod removed from the
-pack, and a re-sync restores exactly the client-side file set — no missing files, no extras.
+pack, and a re-sync restores exactly the client-side file set: no missing files, no extras.
 The only unverified step is a full Minecraft launch, which needs a real account.
 
 ## Layout
 
 ```
-pack/stable/          packwiz pack — MC 1.21.1 Fabric
+pack/stable/          packwiz pack, MC 1.21.1 Fabric
 pack/edge/            MC 26.2 Fabric + Create Fly (later)
 instance/stable/      Prism instance template, zipped by CI
   instance.cfg        OverrideCommands + PreLaunchCommand + memory
@@ -37,7 +37,7 @@ scripts/              CI helpers that must also run by hand
 
 ## Commands
 
-The pack development loop — change mods, then join a real server running them. On Windows
+The pack development loop, change mods, then join a real server running them. On Windows
 run these from **Git Bash**, not WSL or PowerShell (see Conventions):
 
 ```bash
@@ -84,7 +84,7 @@ Cloudflare Pages: the immutable `pack/stable/v1.4.2/` prefix, the rolling `pack/
 prefix, and the launcher artifacts.
 
 Pages Direct Upload replaces the whole deployment every time, so the `gh-pages` branch is the
-accumulator that durably retains past `v*` prefixes — that branch is what makes rollback
+accumulator that durably retains past `v*` prefixes, that branch is what makes rollback
 possible, not the deployment.
 
 Immutable is written first on purpose. If the rolling prefix were updated first and the run
@@ -127,7 +127,7 @@ version error. `scripts/instance-build.py` refuses to build on a mismatch.
   100644 and CI fails with `Permission denied` (exit 126). Fix with
   `git update-index --chmod=+x scripts/<name>`, and check `git ls-files -s scripts/` before
   pushing a new one.
-- **On Windows, run the scripts from Git Bash — not WSL, not PowerShell.** `bash` on the
+- **On Windows, run the scripts from Git Bash, not WSL, not PowerShell.** `bash` on the
   PATH in PowerShell is the WSL launcher at `C:\WINDOWS\system32\bash.exe`, which fails
   outright without a real distro installed (`execvpe(/bin/bash) failed`); the
   `docker-desktop` entry in `wsl -l` is Docker's own utility VM, not one you can use. Git

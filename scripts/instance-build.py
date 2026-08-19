@@ -136,7 +136,7 @@ def build(channel: str, out_dir: Path) -> Path:
 
     if not substituted:
         out.unlink(missing_ok=True)
-        fail(f"{PLACEHOLDER} was never found in {channel}'s instance.cfg — "
+        fail(f"{PLACEHOLDER} was never found in {channel}'s instance.cfg, "
              "the zip would ship without a working pack URL")
 
     # Read it back. A zip that does not contain what Prism looks for is worse

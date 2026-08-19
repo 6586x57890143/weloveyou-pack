@@ -28,7 +28,7 @@ packdir="pack/$channel"
 
 command -v packwiz >/dev/null || { echo "::error::packwiz is not on PATH"; exit 1; }
 docker info >/dev/null 2>&1 || {
-  echo "::error::the Docker daemon is not reachable — start Docker Desktop and retry"
+  echo "::error::the Docker daemon is not reachable, start Docker Desktop and retry"
   exit 1
 }
 
@@ -116,7 +116,7 @@ env=(
 )
 if $play; then
   # Normal worldgen: `stable` carries Terralith, and a flat world tests none of
-  # it. No JVM flags — nothing in jvm-profiles.toml has been benched yet, and a
+  # it. No JVM flags, nothing in jvm-profiles.toml has been benched yet, and a
   # dev server is the wrong place to inherit an unmeasured opinion.
   env+=(-e MOTD="weloveyou $channel (dev)" -e VIEW_DISTANCE="${PLAY_VIEW_DISTANCE:-10}")
   mount=(-v "$volume:/data")
@@ -138,7 +138,7 @@ while [ "$(date +%s)" -lt "$deadline" ]; do
     if $play; then
       echo
       echo "    join at  localhost:$port   (offline mode, any username)"
-      echo "    world    docker volume $volume — survives restarts"
+      echo "    world    docker volume $volume, survives restarts"
       echo "    edit     pack/$channel/mods/*.pw.toml, then re-run to pick it up"
       echo "    Ctrl-C to stop and save."
       echo

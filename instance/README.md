@@ -13,7 +13,7 @@ The documented way to run packwiz-installer is through
 `packwiz-installer-bootstrap`, which downloads the real jar from GitHub Releases
 on every launch. We do not use it. Fetching and executing code at every launch is
 the pattern worth avoiding regardless of who publishes it, the bootstrap's last
-release was July 2020, and packwiz-installer itself last shipped in April 2024 —
+release was July 2020, and packwiz-installer itself last shipped in April 2024,
 so committing known bytes also means the client path survives that repository
 disappearing.
 
