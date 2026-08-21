@@ -38,7 +38,7 @@ AMBIENT = {"minecraft", "java", "fabricloader", "fabric", "mixinextras"}
 # What each side's launcher actually runs. Clients get whatever Prism selects
 # for the Minecraft version, which is 21 for 1.21.1; the server is pinned by the
 # image tag in the platform repo's compose file.
-JAVA_BY_SIDE = {"client": 21, "server": 25}
+JAVA_BY_SIDE = {"client": 25, "server": 25}
 
 
 def fail(msg: str) -> None:
