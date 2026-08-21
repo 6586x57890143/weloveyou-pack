@@ -87,11 +87,11 @@ jobs:
       # Publishing by committing to gh-pages rather than with the Pages artifact
       # actions, because an artifact deploy REPLACES the whole site. That would
       # delete every previously published v{version} prefix, and those are what
-      # makes a rollback possible — repointing the rolling prefix at a version
+      # makes a rollback possible, repointing the rolling prefix at a version
       # that no longer exists is not a rollback.
       # gh-pages is the accumulator, not the thing that serves. Direct Upload
       # replaces the entire deployment every time, so without a durable store of
-      # past releases each publish would wipe the pinned v{version} prefixes —
+      # past releases each publish would wipe the pinned v{version} prefixes,
       # and repointing the rolling prefix at a version that no longer exists is
       # not a rollback. This branch keeps them, and doubles as an audit trail of
       # exactly what was served when.

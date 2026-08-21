@@ -33,7 +33,7 @@ for packfile in "${packs[@]}"; do
   #    so any diff it produces means someone edited metadata without refreshing.
   # Hash the index BEFORE and AFTER refresh rather than asserting the git tree
   # is clean. `refresh` is idempotent, so if it rewrites the index, the index
-  # was stale — which is the actual question. Asserting cleanliness answers a
+  # was stale, which is the actual question. Asserting cleanliness answers a
   # different one and fires on any uncommitted work, making the check unusable
   # during pack development, where it is most useful. This still catches an
   # untracked metafile: refresh adds it to index.toml, so the hash moves.
@@ -41,7 +41,7 @@ for packfile in "${packs[@]}"; do
   (cd "$dir" && packwiz refresh >/dev/null 2>&1) || err "$channel: packwiz refresh failed"
   after=$(cat "$dir/index.toml" "$dir/pack.toml" | sha256sum)
   if [ "$before" != "$after" ]; then
-    err "$channel: index was stale — 'packwiz refresh' in $dir changed it; commit the result"
+    err "$channel: index was stale, 'packwiz refresh' in $dir changed it; commit the result"
   fi
 
   # 2. Every entry declares an explicit, valid side.
@@ -51,7 +51,7 @@ for packfile in "${packs[@]}"; do
     side=$(grep -m1 -oE '^side *= *"[^"]+"' "$meta" | grep -oE '"[^"]+"' | tr -d '"')
     case "$side" in
       client|server|both) ;;
-      "") err "$channel: ${meta#$dir/} declares no side — it would default to both" ;;
+      "") err "$channel: ${meta#$dir/} declares no side, it would default to both" ;;
       *)  err "$channel: ${meta#$dir/} has side=\"$side\"; expected client, server or both" ;;
     esac
   done < <(find "$dir" -name '*.pw.toml' | sort)

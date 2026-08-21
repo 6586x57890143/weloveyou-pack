@@ -1,0 +1,13 @@
+name = "Through the lily pads, gently"
+filename = "through-the-lilypads-gently--nc1.21.1--fab--1.2.1.jar"
+side = "server"
+
+[download]
+url = "https://cdn.modrinth.com/data/i8eTQgbq/versions/dTsIevlL/through-the-lilypads-gently--nc1.21.1--fab--1.2.1.jar"
+hash-format = "sha512"
+hash = "e4e9740f4d2bbc4763ad0b1f99abe988e2f2b932cbee2efdc733f9156b308b277696383841e67720523efa0a935358cd732fc111039f74ccde04c361db3cf94b"
+
+[update]
+[update.modrinth]
+mod-id = "i8eTQgbq"
+version = "dTsIevlL"

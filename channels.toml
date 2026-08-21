@@ -9,8 +9,8 @@
 # re-tag.
 #
 # The platform repo (weloveyou.mc) carries the same URL in wly.toml, because the
-# daemon polls it to detect releases. One URL, duplicated once, deliberately —
-# the alternative is a shared config repo, which is more machinery than a URL is
+# daemon polls it to detect releases. One URL, duplicated once, deliberately.
+# The alternative is a shared config repo, which is more machinery than a URL is
 # worth.
 
 [stable]
