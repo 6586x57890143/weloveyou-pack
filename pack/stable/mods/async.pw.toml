@@ -1,0 +1,13 @@
+name = "Async"
+filename = "async-fabric-0.2.0+alpha-1.21.1.jar"
+side = "server"
+
+[download]
+url = "https://cdn.modrinth.com/data/vEC2jm6I/versions/PhDCt4Jt/async-fabric-0.2.0%2Balpha-1.21.1.jar"
+hash-format = "sha512"
+hash = "80dbd26d2082b3bd720f2610e18568d9c005215c66d6a920a76dd80ecc665203af53eb99f5c61ab9b2716f8ba33c94704b67597df3014240a9c7bf9e7562dd6c"
+
+[update]
+[update.modrinth]
+mod-id = "vEC2jm6I"
+version = "PhDCt4Jt"

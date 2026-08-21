@@ -1,0 +1,13 @@
+name = "Atmosfera"
+filename = "atmosfera-2.7.2+mc1.21.1.jar"
+side = "client"
+
+[download]
+url = "https://cdn.modrinth.com/data/28G1xpgF/versions/HAAAMVa2/atmosfera-2.7.2%2Bmc1.21.1.jar"
+hash-format = "sha512"
+hash = "63dc6fbe6fba9dfd5e7abd9fd82ce260d949919318007d4532a6980b071e8b4bed15d9acfbe4cb907449b0b392e3abb48f365746b3d0fec6e5547be50ce9773e"
+
+[update]
+[update.modrinth]
+mod-id = "28G1xpgF"
+version = "HAAAMVa2"

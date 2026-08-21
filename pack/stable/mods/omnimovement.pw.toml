@@ -1,0 +1,13 @@
+name = "Omnimovement"
+filename = "omnimovement-fabric-1.0+mc1.21.jar"
+side = "both"
+
+[download]
+url = "https://cdn.modrinth.com/data/ZmKZ0vTP/versions/nbOS5Czo/omnimovement-fabric-1.0%2Bmc1.21.jar"
+hash-format = "sha512"
+hash = "b0155732ce8353cc83af0ee35001bde92d4dafbaf571c782be1091cbcb456f8412b61fe32abbce1f1a681fa4133754966154d77ff360977da6351cfd60063948"
+
+[update]
+[update.modrinth]
+mod-id = "ZmKZ0vTP"
+version = "nbOS5Czo"
