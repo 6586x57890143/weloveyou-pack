@@ -1,0 +1,13 @@
+name = "Interactive Foliage"
+filename = "mc2_interactivefoliage-1.3.0-fabric+1.21.1.jar"
+side = "client"
+
+[download]
+url = "https://cdn.modrinth.com/data/ba5MV2CF/versions/9lRMkIPS/mc2_interactivefoliage-1.3.0-fabric%2B1.21.1.jar"
+hash-format = "sha512"
+hash = "2ba0f08f276785a5d69d1d3a376a688778ce2a9a28c4918c09b84338c4997c18275fde0848671c82f070f43c00ce31eafdb007d3082ddf8d35ad0ea0c8f54c93"
+
+[update]
+[update.modrinth]
+mod-id = "ba5MV2CF"
+version = "9lRMkIPS"

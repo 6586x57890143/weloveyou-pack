@@ -1,10 +1,6 @@
 name = "Concurrent Chunk Management Engine (Fabric)"
 filename = "c2me-fabric-mc1.21.1-0.4.0-alpha.0.27.jar"
-# Server only. C2ME parallelises chunk generation and loading, which a client
-# connected to a dedicated server never does. Shipping it to clients bought
-# nothing and dragged its JDK 25 requirement onto every player's machine, where
-# Prism correctly picks Java 21 for 1.21.1.
-side = "server"
+side = "both"
 
 [download]
 url = "https://cdn.modrinth.com/data/VSNURh3q/versions/gRm1ZAvc/c2me-fabric-mc1.21.1-0.4.0-alpha.0.27.jar"
