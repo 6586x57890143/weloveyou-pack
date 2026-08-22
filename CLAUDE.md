@@ -33,6 +33,7 @@ instance/stable/      Prism instance template, zipped by CI
   .minecraft/packwiz-installer.jar   pinned, hash-checked before every build
 channels.toml         where each channel publishes to
 scripts/              CI helpers that must also run by hand
+  pack-site.py        the endpoint's landing page, rendered into the rolling prefix
 ```
 
 ## Commands
@@ -65,6 +66,8 @@ python scripts/deps-check.py stable   # per-side dependency + java constraint re
 scripts/smoke-boot.sh stable          # the CI gate: boot, require "Done (", tear down
 python scripts/instance-build.py   # build every channel's instance zip into dist/
 python scripts/instance-build.py stable
+python scripts/pack-site.py stable --out /tmp/site   # the landing page, hits Modrinth
+python scripts/pack-site.py stable --out /tmp/site --offline   # what CI runs
 
 cd pack/stable && packwiz refresh              # after ANY pack edit
 cd pack/stable && packwiz modrinth export -o ../../dist/weloveyou-stable.mrpack
@@ -92,6 +95,30 @@ then failed, players would be pointed at a version with no permanent copy to rol
 
 **Rollback** is repointing the rolling prefix at a previous `v{version}`. That only works
 because every release also lands somewhere immutable.
+
+## The endpoint has a page
+
+`pack/stable/` on Pages is a directory of `.toml` files: correct, and unreadable to
+whoever was handed the link. `scripts/pack-site.py` renders an `index.html` into the
+rolling prefix at release time with the download buttons and the mod list.
+
+- **It matches the benchmark site's design identity** (see `weloveyou.mc`
+  `scripts/bench-site.py`, which writes the palette down for exactly this reason):
+  monospace, dark, Minecraft's chat palette desaturated. Copied rather than shared,
+  because a stylesheet common to two repos on two cadences is a third thing to publish.
+- **Modrinth is called at BUILD time**, so the page has no runtime dependency on their
+  API, no CORS question, and one request for everyone rather than one per visitor. A
+  failed lookup warns and falls back to the pack's own name, filename and side.
+  **Their outage must never fail a release.**
+- **The buttons are driven by the files on disk**, so a missing artifact drops its button
+  instead of publishing a link to a 404. The pinned `packwiz-installer.jar` is copied out
+  beside the zip: it is the one thing here that executes on a player's machine, so it
+  should be downloadable and checkable on its own.
+- **Rolling prefix only.** The immutable `v{version}` prefixes carry no artifacts, so a
+  page there would be three buttons pointing at nothing.
+- `ci.yml` renders it `--offline` on every PR. The platform repo learned that one the
+  expensive way: nothing ran its generator until the publish did, so a crash in it
+  surfaced as a red deploy after the merge meant to publish the numbers.
 
 ## The two invariants
 

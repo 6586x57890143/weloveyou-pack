@@ -100,6 +100,7 @@ jobs:
         env:
           CHANNEL: ${{ steps.ch.outputs.channel }}
           VERSION: ${{ steps.ch.outputs.version }}
+          PROJECT: ${{ vars.CF_PAGES_PROJECT }}
         run: |
           set -euo pipefail
           site="$RUNNER_TEMP/site"
@@ -122,7 +123,23 @@ jobs:
 
           cp "dist/weloveyou-${CHANNEL}.zip"    "$dest/weloveyou-${CHANNEL}.zip"
           cp "dist/weloveyou-${CHANNEL}.mrpack" "$dest/weloveyou-${CHANNEL}.mrpack"
+          # The pinned installer, published beside the zip rather than only
+          # inside it. It is the one thing here that executes on a player's
+          # machine, so it should be downloadable and checkable on its own.
+          jar="instance/${CHANNEL}/.minecraft/packwiz-installer.jar"
+          if [ -f "$jar" ]; then cp "$jar" "$dest/"; fi
           touch "$site/.nojekyll"
+
+          # The landing page. Without it the endpoint is a directory of .toml
+          # files, which is correct and unreadable to whoever was handed the
+          # link. Rolling prefix only: the v{version} prefixes are archives
+          # reached by URL and carry no artifacts of their own, so a page there
+          # would be three buttons pointing at nothing.
+          #
+          # Modrinth is called at build time. A lookup failure warns and falls
+          # back to the pack's own metadata, so their API cannot fail a release.
+          base="https://${PROJECT:-weloveyou-pack}.pages.dev/pack/${CHANNEL}"
+          python scripts/pack-site.py "$CHANNEL" --out "$dest" --base-url "$base"
 
           cd "$site"
           git config user.name "github-actions[bot]"
@@ -177,6 +194,7 @@ jobs:
             echo "- rolling: \`${base}/pack/${CHANNEL}/pack.toml\`"
             echo "- pinned:  \`${base}/pack/${CHANNEL}/v${VERSION}/pack.toml\`"
             echo "- instance zip: \`${base}/pack/${CHANNEL}/weloveyou-${CHANNEL}.zip\`"
+            echo "- page: ${base}/pack/${CHANNEL}/"
             echo
             echo "wly will notice the version change and post the release to Discord."
           } >> "$GITHUB_STEP_SUMMARY"
