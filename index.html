@@ -1,8 +1,86 @@
 <!doctype html>
-<title>weloveyou pack</title>
-<h1>weloveyou</h1>
-<p>Modpack distribution. Nothing published here yet — this branch is written by
-the release workflow, one directory per channel:</p>
-<pre>/pack/stable/pack.toml            rolling, always the current release
-/pack/stable/v&lt;version&gt;/pack.toml  pinned, never changes
-/pack/stable/weloveyou-stable.zip  Prism Launcher instance</pre>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="dark"><title>weloveyou 💖 modpack</title><style>
+:root{
+ --bg:#211F1B; --panel:#282621; --rule:#3B372F; --rule-hi:#564E42;
+ --fg:#D5CEC1; --fg-hi:#EFE9DC; --dim:#8E8677;
+ --win:#8FA860; --lose:#C4705C; --base:#D8A657; --info:#84A69C;
+ --heart:#E39AAE;
+ --mono:ui-monospace,"Cascadia Code","JetBrains Mono",Menlo,Consolas,"DejaVu Sans Mono",monospace;
+}
+*{box-sizing:border-box}
+html{background:var(--bg)}
+body{margin:0;padding:2.5rem 1.5rem 4rem;background:var(--bg);color:var(--fg);
+ font:15px/1.6 var(--mono);font-variant-numeric:tabular-nums;-webkit-font-smoothing:antialiased}
+main{max-width:76rem;margin:0 auto}
+a{color:var(--info);text-decoration:none;border-bottom:1px solid transparent}
+a:hover{border-bottom-color:var(--info)}
+code{font-family:var(--mono);color:var(--fg-hi)}
+.dim{color:var(--dim)}
+.bar-row{display:flex;align-items:baseline;gap:1ch;padding-bottom:.5rem;flex-wrap:wrap}
+.bar-row .t{flex:1 1 auto;display:flex;align-items:baseline;gap:.9ch;flex-wrap:wrap}
+.bar-row .d{color:var(--dim);letter-spacing:.04em}
+.brand{color:var(--heart);font-size:19px;font-weight:600;letter-spacing:.02em}
+.brand .hb{font-size:16px}
+.wordmark{color:var(--dim);letter-spacing:.14em;text-transform:uppercase;font-size:13px}
+.hrule{border-top:1px solid var(--rule-hi)}
+h2{font-size:15px;font-weight:600;margin:2.25rem 0 .4rem;color:var(--fg-hi);
+ letter-spacing:.1em;text-transform:uppercase}
+.note{color:var(--dim);margin:.5rem 0 1rem}
+.note strong{color:var(--fg)}
+
+/* Dotted leaders, same as the benchmark page: the dots are clipped by
+   overflow, so any width fits exactly. */
+.leads{margin:1.25rem 0 0;columns:2;column-gap:3rem}
+.lead{break-inside:avoid;display:flex;align-items:baseline;gap:.75ch;min-width:0}
+.lead .k{white-space:nowrap;color:var(--dim);letter-spacing:.06em;flex:0 0 auto}
+.lead .d{flex:1 1 auto;min-width:1.5ch;border-bottom:1px dotted var(--rule);transform:translateY(-.3em)}
+.lead .v{flex:0 1 auto;min-width:0;color:var(--fg-hi);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* Downloads. The first is what almost everyone wants, so it is the only one
+   that is filled in; the rest are outlines. */
+.gets{display:flex;flex-wrap:wrap;gap:.6rem;margin:.9rem 0 0}
+.get{display:flex;flex-direction:column;gap:.1rem;border:1px solid var(--rule-hi);
+ background:var(--panel);padding:.6rem .95rem;min-width:15rem;color:var(--fg-hi)}
+.get:hover{border-color:var(--info);border-bottom-color:var(--info)}
+.get.primary{border-color:var(--heart);background:#2F2822}
+.get .n{font-weight:600;letter-spacing:.02em}
+.get .s{color:var(--dim);font-size:12px;letter-spacing:.04em}
+.url{display:flex;align-items:baseline;gap:1ch;border:1px solid var(--rule);background:var(--panel);
+ padding:.5rem .8rem;margin:.6rem 0 0;overflow-x:auto;white-space:nowrap;font-size:13px}
+.url .k{color:var(--dim);letter-spacing:.06em;flex:0 0 auto}
+
+.filters{display:flex;flex-wrap:wrap;gap:.5rem;align-items:center;margin:.6rem 0 1rem}
+input[type=search]{flex:1 1 18rem;min-width:12rem;background:var(--panel);border:1px solid var(--rule);
+ color:var(--fg-hi);font:14px var(--mono);padding:.45rem .7rem}
+input[type=search]:focus{outline:0;border-color:var(--info)}
+.chip{border:1px solid var(--rule);background:var(--panel);color:var(--dim);font:12px var(--mono);
+ letter-spacing:.08em;text-transform:uppercase;padding:.45rem .8rem;cursor:pointer}
+.chip[aria-pressed=true]{color:var(--fg-hi);border-color:var(--rule-hi);background:#2F2C25}
+.count{border-color:transparent;background:transparent;cursor:default}
+
+/* One card per mod. auto-fill so the number of columns follows the width
+   rather than a stack of breakpoints. */
+.mods{display:grid;grid-template-columns:repeat(auto-fill,minmax(19rem,1fr));gap:.4rem}
+.mod{display:flex;gap:.75rem;border:1px solid var(--rule);background:var(--panel);padding:.6rem .75rem}
+.mod[hidden]{display:none}
+.mod img,.mod .noicon{width:40px;height:40px;flex:0 0 auto;image-rendering:pixelated;
+ border:1px solid var(--rule);background:var(--bg)}
+.mod .noicon{display:flex;align-items:center;justify-content:center;color:var(--rule-hi)}
+.mod .b{min-width:0;flex:1 1 auto}
+.mod .t{display:flex;align-items:baseline;gap:.7ch;flex-wrap:wrap}
+.mod .t a,.mod .t .n{color:var(--fg-hi);font-weight:600}
+.mod .d{color:var(--dim);font-size:13px;line-height:1.45;margin:.1rem 0 0;
+ display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.mod .f{color:var(--rule-hi);font-size:11px;letter-spacing:.04em;margin:.25rem 0 0;
+ overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.side{font-size:11px;letter-spacing:.08em;text-transform:uppercase;flex:0 0 auto}
+.side.both{color:var(--win)}
+.side.client{color:var(--info)}
+.side.server{color:var(--base)}
+.empty{color:var(--dim);padding:1rem 0}
+footer{margin-top:2.5rem;padding-top:1rem;border-top:1px solid var(--rule);color:var(--dim);text-align:center}
+footer .hb{color:var(--heart)}
+@media(max-width:760px){.leads{columns:1}}
+</style></head><body>
+<main><div class="bar-row"><span class="t"><span class="brand">weloveyou <span class="hb">&#128150;</span></span><span class="wordmark">modpack distribution</span></span></div><div class="hrule"></div><h2>Channels</h2><p class="note">One directory per channel, each its own packwiz endpoint. The instance re-syncs from the rolling prefix; every release also keeps an immutable <code>v{version}</code> copy beside it, which is what makes a rollback possible.</p><div class="gets"><a class="get primary" href="pack/stable/"><span class="n">stable v0.1.7</span><span class="s">minecraft 1.21.1 &#183; fabric 0.19.3</span></a></div><footer>Published by the release workflow, with <span class="hb">&#128150;</span>, from <a href="https://github.com/6586x57890143/weloveyou-pack">weloveyou-pack</a>.</footer></main>
+</body></html>
