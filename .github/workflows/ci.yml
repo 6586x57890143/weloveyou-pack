@@ -82,6 +82,12 @@ jobs:
       # Verifies the pinned packwiz-installer.jar hash and the version agreement
       # between mmc-pack.json and pack.toml before it will build anything.
       - run: python scripts/instance-build.py
+      # Render the endpoint page on every PR. --offline skips Modrinth, so this
+      # is a syntax and template check rather than a network test. The platform
+      # repo learned this the expensive way: nothing ran its site generator
+      # until the publish did, so a crash in it surfaced as a red deploy after
+      # the merge that was meant to publish.
+      - run: python scripts/pack-site.py stable --offline --out "$RUNNER_TEMP/site"
       - uses: actions/upload-artifact@v7
         with:
           name: instance-zips
