@@ -296,6 +296,11 @@ hash = "d73c8bca68094f1249d7e71e764ea04506028832dd7cbf63ab821845dc64ea5a"
 metafile = true
 
 [[files]]
+file = "mods/squaremap.pw.toml"
+hash = "006ab468593800134c0bbf0ffdf8e90586c55da712cfc0e2dbe2f6c44757e15b"
+metafile = true
+
+[[files]]
 file = "mods/stony-cliffs-are-cool.pw.toml"
 hash = "ec3333fdf4d54ed6d8709e09c76b0475a34eb947cb897308f80a4f7f37d7e54b"
 metafile = true
