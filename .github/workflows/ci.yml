@@ -88,6 +88,7 @@ jobs:
       # until the publish did, so a crash in it surfaced as a red deploy after
       # the merge that was meant to publish.
       - run: python scripts/pack-site.py stable --offline --out "$RUNNER_TEMP/site"
+      - run: python scripts/pack-site.py --root "$RUNNER_TEMP"
       - uses: actions/upload-artifact@v7
         with:
           name: instance-zips

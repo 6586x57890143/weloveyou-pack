@@ -116,7 +116,10 @@ rolling prefix at release time with the download buttons and the mod list.
   should be downloadable and checkable on its own.
 - **Rolling prefix only.** The immutable `v{version}` prefixes carry no artifacts, so a
   page there would be three buttons pointing at nothing.
-- `ci.yml` renders it `--offline` on every PR. The platform repo learned that one the
+- **The site root is generated too** (`pack-site.py --root`), from the channels
+  actually present under `pack/`. It used to be a hand-written placeholder saying
+  nothing had been published yet, and it was still saying that two releases later.
+- `ci.yml` renders both `--offline` on every PR. The platform repo learned that one the
   expensive way: nothing ran its generator until the publish did, so a crash in it
   surfaced as a red deploy after the merge meant to publish the numbers.
 

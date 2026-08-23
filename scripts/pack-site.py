@@ -271,6 +271,50 @@ def render(pack, mods, meta, channel, outdir, base_url):
             + f"\n<script>{JS}</script>\n</body></html>\n")
 
 
+def root(site):
+    """The site root, which was a hand-written placeholder saying nothing had
+    been published yet - still saying it two releases later. Generated from the
+    channels actually present, so it cannot go stale that way again."""
+    rows = []
+    for d in sorted((site / "pack").glob("*")):
+        if not (d / "pack.toml").exists():
+            continue
+        pk = tomllib.loads((d / "pack.toml").read_text(encoding="utf-8"))
+        v = pk.get("versions", {})
+        rows.append(
+            f'<a class="get primary" href="pack/{html.escape(d.name)}/">'
+            f'<span class="n">{html.escape(d.name)} v{html.escape(str(pk.get("version", "?")))}</span>'
+            f'<span class="s">minecraft {html.escape(v.get("minecraft", "?"))} '
+            f'&#183; fabric {html.escape(v.get("fabric", "?"))}</span></a>')
+    body = (
+        '<main><div class="bar-row"><span class="t">'
+        '<span class="brand">weloveyou <span class="hb">&#128150;</span></span>'
+        '<span class="wordmark">modpack distribution</span></span></div>'
+        '<div class="hrule"></div>'
+        '<h2>Channels</h2>'
+        '<p class="note">One directory per channel, each its own packwiz endpoint. '
+        'The instance re-syncs from the rolling prefix; every release also keeps an '
+        'immutable <code>v{version}</code> copy beside it, which is what makes a '
+        'rollback possible.</p>'
+        + (f'<div class="gets">{"".join(rows)}</div>' if rows
+           else '<p class="empty">No channel has been published yet.</p>')
+        + '<footer>Published by the release workflow, with '
+        '<span class="hb">&#128150;</span>, from '
+        '<a href="https://github.com/6586x57890143/weloveyou-pack">weloveyou-pack</a>.'
+        '</footer></main>')
+    out = site / "index.html"
+    out.write_text(
+        "<!doctype html>\n"
+        '<html lang="en"><head><meta charset="utf-8">'
+        '<meta name="viewport" content="width=device-width,initial-scale=1">'
+        '<meta name="color-scheme" content="dark">'
+        "<title>weloveyou \U0001f496 modpack</title>"
+        f"<style>{CSS}</style></head><body>\n{body}\n</body></html>\n",
+        encoding="utf-8", newline="\n")
+    print(f"wrote {out}: {len(rows)} channel(s)")
+    return 0
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("channel", nargs="?", default="stable")
@@ -278,7 +322,12 @@ def main():
     ap.add_argument("--out", default=None, help="where index.html goes, default --pack")
     ap.add_argument("--base-url", default="", help="published URL of this prefix")
     ap.add_argument("--offline", action="store_true", help="skip Modrinth, for tests")
+    ap.add_argument("--root", default=None,
+                    help="write the site root index for this directory and stop")
     a = ap.parse_args()
+
+    if a.root:
+        return root(pathlib.Path(a.root))
 
     packdir = pathlib.Path(a.pack or f"pack/{a.channel}")
     outdir = pathlib.Path(a.out or packdir)
