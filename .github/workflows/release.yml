@@ -141,6 +141,11 @@ jobs:
           base="https://${PROJECT:-weloveyou-pack}.pages.dev/pack/${CHANNEL}"
           python scripts/pack-site.py "$CHANNEL" --out "$dest" --base-url "$base"
 
+          # The site root, generated from the channels actually present. It was
+          # a hand-written placeholder saying nothing had been published yet,
+          # and it was still saying that two releases later.
+          python scripts/pack-site.py --root "$site"
+
           cd "$site"
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
