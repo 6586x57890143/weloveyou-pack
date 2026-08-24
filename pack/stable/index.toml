@@ -206,6 +206,11 @@ hash = "c9358088b698d05605a4c0edb544e3ea63cd5ae33a209602c44b5afd17bf6ab8"
 metafile = true
 
 [[files]]
+file = "mods/minimotd.pw.toml"
+hash = "6808f357bc6e177e8b18ffbf9b8314b00e6c8ec9cdca83ff93030b58b51ce4c0"
+metafile = true
+
+[[files]]
 file = "mods/modernfix.pw.toml"
 hash = "b9651d06e56ad51c1cdcf4b03b6a34328b7dc941f263ff92b189ee26a47cc224"
 metafile = true
