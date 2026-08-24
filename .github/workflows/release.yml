@@ -130,6 +130,14 @@ jobs:
           if [ -f "$jar" ]; then cp "$jar" "$dest/"; fi
           touch "$site/.nojekyll"
 
+          # Static images the Discord surfaces link to. They live in the repo
+          # rather than being fetched, because a card that points at someone
+          # else's CDN breaks when that CDN moves.
+          if [ -d assets ]; then
+            mkdir -p "$site/assets"
+            find assets -maxdepth 1 -type f ! -name README.md -exec cp {} "$site/assets/" \;
+          fi
+
           # The landing page. Without it the endpoint is a directory of .toml
           # files, which is correct and unreadable to whoever was handed the
           # link. Rolling prefix only: the v{version} prefixes are archives

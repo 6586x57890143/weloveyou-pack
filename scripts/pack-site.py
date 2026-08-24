@@ -36,6 +36,10 @@ API = "https://api.modrinth.com/v2/projects?ids="
 # live in different repositories on different release cadences, and a shared
 # stylesheet between them would be a third thing to publish.
 CSS = """
+/* SOURCE OF TRUTH: weloveyou.mc scripts/brand.py. This block is a copy across
+   a repo boundary, the same deliberate duplication as the pack URL, because a
+   shared config repo is more machinery than a palette is worth. If you change a
+   token here, change it there, and vice versa. */
 :root{
  --bg:#211F1B; --panel:#282621; --rule:#3B372F; --rule-hi:#564E42;
  --fg:#D5CEC1; --fg-hi:#EFE9DC; --dim:#8E8677;
@@ -228,7 +232,7 @@ def render(pack, mods, meta, channel, outdir, base_url):
     p = [
         "<main>",
         '<div class="bar-row"><span class="t">'
-        '<span class="brand">weloveyou <span class="hb">&#128150;</span></span>'
+        '<span class="brand">wly <span class="hb">&#128150;</span></span>'
         f'<span class="wordmark">modpack &#183; {html.escape(channel)}</span></span>'
         f'<span class="d">v{html.escape(str(pack.get("version", "?")))}</span></div>'
         '<div class="hrule"></div>',
@@ -266,7 +270,7 @@ def render(pack, mods, meta, channel, outdir, base_url):
             '<html lang="en"><head><meta charset="utf-8">'
             '<meta name="viewport" content="width=device-width,initial-scale=1">'
             '<meta name="color-scheme" content="dark">'
-            f"<title>weloveyou \U0001f496 {html.escape(channel)} modpack</title>"
+            f"<title>wly \U0001f496 {html.escape(channel)} modpack</title>"
             f"<style>{CSS}</style></head><body>\n" + "\n".join(p)
             + f"\n<script>{JS}</script>\n</body></html>\n")
 
@@ -288,7 +292,7 @@ def root(site):
             f'&#183; fabric {html.escape(v.get("fabric", "?"))}</span></a>')
     body = (
         '<main><div class="bar-row"><span class="t">'
-        '<span class="brand">weloveyou <span class="hb">&#128150;</span></span>'
+        '<span class="brand">wly <span class="hb">&#128150;</span></span>'
         '<span class="wordmark">modpack distribution</span></span></div>'
         '<div class="hrule"></div>'
         '<h2>Channels</h2>'
@@ -308,7 +312,7 @@ def root(site):
         '<html lang="en"><head><meta charset="utf-8">'
         '<meta name="viewport" content="width=device-width,initial-scale=1">'
         '<meta name="color-scheme" content="dark">'
-        "<title>weloveyou \U0001f496 modpack</title>"
+        "<title>wly \U0001f496 modpack</title>"
         f"<style>{CSS}</style></head><body>\n{body}\n</body></html>\n",
         encoding="utf-8", newline="\n")
     print(f"wrote {out}: {len(rows)} channel(s)")
