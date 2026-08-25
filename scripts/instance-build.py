@@ -23,8 +23,10 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import os
 import sys
 import tomllib
+import urllib.request
 import zipfile
 from pathlib import Path
 
@@ -86,6 +88,51 @@ def check_versions(instance_dir: Path, pack_dir: Path) -> None:
           f"fabric {want['net.fabricmc.fabric-loader']})")
 
 
+META = "https://meta.prismlauncher.org/v1"
+
+
+def check_components_resolve(instance_dir: Path, offline: bool = False) -> None:
+    """Every component Prism is told to install must actually exist upstream.
+
+    This exists because one did not, and it reached a player:
+
+        Komponenten-Metadaten-Update-Aufgabe fehlgeschlagen ...
+        Metadaten fuer Java 25 konnten nicht heruntergeladen werden.
+
+    mmc-pack.json pinned the Java component as version "25". Prism publishes it
+    as "java25". A version string that does not exist can never resolve, so the
+    instance could not update AT ALL, and nothing here noticed: check_versions
+    only compares mmc-pack.json against pack.toml, and both of those agreed with
+    each other about a component neither of them owns.
+
+    The launcher's own metadata is the authority on what a launcher component is
+    called, so ask it.
+    """
+    mmc = json.loads((instance_dir / "mmc-pack.json").read_text(encoding="utf-8"))
+    if offline:
+        print("  component resolution SKIPPED (offline)")
+        return
+
+    for c in mmc["components"]:
+        uid, version = c["uid"], c["version"]
+        url = f"{META}/{uid}/index.json"
+        try:
+            with urllib.request.urlopen(url, timeout=30) as resp:
+                index = json.loads(resp.read().decode("utf-8"))
+        except Exception as exc:  # noqa: BLE001 - any failure is a failure to verify
+            fail(f"could not reach {url} to verify {uid}: {exc}")
+
+        have = [v["version"] for v in index.get("versions", [])]
+        if version not in have:
+            near = ", ".join(v for v in have[:8])
+            fail(
+                f"{uid} is pinned to {version!r}, which Prism does not publish. "
+                f"It offers: {near}. An instance pinned to a version that does "
+                f"not exist cannot update at all."
+            )
+        print(f"  {uid} {version} resolves")
+
+
 def pack_url(channel: str) -> str:
     """One source of truth on the pack side. The platform repo carries the same
     URL in wly.toml so the daemon can poll it; the builder never reads that."""
@@ -110,6 +157,7 @@ def build(channel: str, out_dir: Path) -> Path:
     print(f"=== {channel}")
     check_pinned_jar(instance_dir)
     check_versions(instance_dir, pack_dir)
+    check_components_resolve(instance_dir, offline=os.environ.get("INSTANCE_OFFLINE") == "1")
 
     url = pack_url(channel)
     print(f"  pack url {url}")
