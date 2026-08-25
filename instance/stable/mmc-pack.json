@@ -2,9 +2,9 @@
     "components": [
         {
             "cachedName": "Java",
-            "cachedVersion": "25",
+            "cachedVersion": "java25",
             "uid": "net.minecraft.java",
-            "version": "25"
+            "version": "java25"
         },
         {
             "important": true,
