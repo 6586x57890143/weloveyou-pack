@@ -1,0 +1,13 @@
+name = "Fog"
+filename = "Fog-fabric-1.11.0-1.21.1.jar"
+side = "both"
+
+[download]
+url = "https://cdn.modrinth.com/data/WuGVWUF2/versions/olPlNGTG/Fog-fabric-1.11.0-1.21.1.jar"
+hash-format = "sha512"
+hash = "42e80dc964aeab70662b644fc6e24c4cc54d2e3e7a5875f5d890eb1268ab6b40c8031c2d20ff06e2d7d379915900829e789d4d9828f66c586ae4adc96306ca17"
+
+[update]
+[update.modrinth]
+mod-id = "WuGVWUF2"
+version = "olPlNGTG"

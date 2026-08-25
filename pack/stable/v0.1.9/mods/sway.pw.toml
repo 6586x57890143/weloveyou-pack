@@ -1,0 +1,13 @@
+name = "SWAY API"
+filename = "sway-2.4.3-fabric+1.21.1.jar"
+side = "client"
+
+[download]
+url = "https://cdn.modrinth.com/data/Gj6Yce3v/versions/kDIFRbGh/sway-2.4.3-fabric%2B1.21.1.jar"
+hash-format = "sha512"
+hash = "dbbc78bb6e8156fe1d7c8662ec29cb1c57f8e7dbdca2a1891344c8a39c09c31a0884aa017de4507771ff7a1f3fce78a98b16fd9e7e699c24bd3b517716e0a319"
+
+[update]
+[update.modrinth]
+mod-id = "Gj6Yce3v"
+version = "kDIFRbGh"
