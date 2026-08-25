@@ -113,6 +113,23 @@ env=(
   -e MEMORY="${MC_MEMORY:-3G}"
   -e ONLINE_MODE=false
   -e SERVER_PORT="$inner"
+  # spark ships server-side and starts a BACKGROUND async-profiler by default.
+  # Its bundled async-profiler is 2.9 from 2022 and segfaults the JVM on Java 25
+  # during startup, so without this the server dies before "Done (" and this
+  # script correctly reports the pack as unbootable:
+  #
+  #   [Server thread/INFO]: Starting background profiler...
+  #   SIGSEGV (0xb) ... spark-...-libasyncProfiler.so.tmp+0x270e9
+  #
+  # NOT an aarch64 problem, whatever it was first blamed on: that trace is from
+  # a linux-amd64 CI runner. Java 25 is the variable, not the architecture.
+  #
+  # Disabling it leaves /spark tps working, because tick timing comes from
+  # spark's own hook and never touches the native agent. The same flag is in
+  # weloveyou.mc's docker-compose.yml and in its bench harness, deliberately:
+  # everything that boots this pack has to boot it the same way, or CI proves a
+  # server nobody runs.
+  -e JVM_OPTS="-Dspark.backgroundProfiler=false"
 )
 if $play; then
   # Normal worldgen: `stable` carries Terralith, and a flat world tests none of
