@@ -301,6 +301,11 @@ hash = "d73c8bca68094f1249d7e71e764ea04506028832dd7cbf63ab821845dc64ea5a"
 metafile = true
 
 [[files]]
+file = "mods/spark.pw.toml"
+hash = "f03452b38a7ce73431c647b772f11051d30bb23891f6dfba1173a65319f4d7ac"
+metafile = true
+
+[[files]]
 file = "mods/squaremap.pw.toml"
 hash = "006ab468593800134c0bbf0ffdf8e90586c55da712cfc0e2dbe2f6c44757e15b"
 metafile = true
